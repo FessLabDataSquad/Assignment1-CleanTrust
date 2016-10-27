@@ -1,0 +1,833 @@
+---
+title: "Elevation Data Cleaning"
+author: "Adam Sparks"
+date: "Oct 9, 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+#Overview
+
+## Specific Goal
+Make clean data files for all studies for our 1st Elevation publication. 
+
+## Project ID
+Study labels are different in various places.
+
+Study # in paper: Sparks files, OSF, Monkey/Gizmo & name
+
+Study 1: 01a1 Free Response, NA, Monkey
+
+Study 2: 01a2 Free Response, , Monkey
+
+Study 3: 01b1 Attitude Emotion Behavior,  , Monkey
+
+Study 4: Simple Elevation 1, , Gizmo
+
+Study 5: Simple Elevation 2, , Gizmo
+
+Study 6: Simple Elevation 3, , Gizmo
+
+Study 7: Simple Elevation 4, , Gizmo
+
+In Sparks personal files, 4, 5, 6, 7 currently "Simple Elevation 1, 2, 3, 4". On OSF, I think they're 1, 2, 4, 5 (with an incomplete field study as #3)
+
+#Data Cleaning
+## Data preparation in spreadsheet software
+
+Notes about this step included here.
+
+###Study1
+- SurveyMonkey
+- Delete unused columns (F:I)
+- Create short variable names
+- political: 1-ext. lib., 7-ext. consv.
+
+###Study2
+- SurveyMonkey
+- check: pro2, anti3
+- Delete columns F:I
+- Create short variable names
+- political: 1-ext. lib., 7-ext. consv.
+
+###Study3
+- SurveyMonkey
+- Short names differ from other studies because there are so many (could come back and reconcile the names)
+- did some attention-check-based cleaning in excel (could redo in R)
+
+###Study 4
+- Delete unused columns
+- Create short variable names
+- PartID 443 device type -- correction
+- Delete Ps with failed comprehension checks (n=6)
+- Word count with =IF(ISBLANK(AV10),0,LEN(TRIM(AV10))-LEN(SUBSTITUTE(AV10," ",""))+1)
+
+###Study 5
+- Delete unused columns
+- Create short variable names
+- Word count with =IF(ISBLANK(AV10),0,LEN(TRIM(AV10))-LEN(SUBSTITUTE(AV10," ",""))+1)
+
+###Study 6
+- delete unused columns
+- paste (transposed) column headers to new tab
+- create short variable names
+    - "Right now, I feel that" attitude items cannot be distinguished based on the standard results output because the order of variables on the saved PDF is randomized. I solved this by looking at individual level results, which report the full text of the multiple choice selection for these items.
+
+### Study 7
+- delete columns D:M (unused + unique MTurk links that could be identifiers)
+- paste (transposed) column headers to new tab & create short variable names: "study7_variablenames.csv"
+
+## Load data
+Here I load the .csv raw files.
+```{r}
+study1 = read.csv("study1_rawdata.csv", header = TRUE)
+study2 = read.csv("study2_rawdata.csv", header = TRUE)
+study3 = read.csv("study3_rawdata.csv", header = TRUE)
+study4 = read.csv("study4_rawdata.csv", header = TRUE)
+study5 = read.csv("study5_rawdata.csv", header = TRUE)
+study6 = read.csv("study6_rawdata.csv", header = TRUE)
+study7 = read.csv("study7_rawdata.csv", header = TRUE)
+
+#over life of this project I've changed how I deal with variable names. I plan to import separate files of short/long names going forward.
+
+variables_study1 = read.csv("study1_variablenames.csv", header = TRUE)
+attributes(study1)$variable.labels = variables_study1[, 2:3]  #i thought those would show as subheaders in the data frame viewer
+
+variables_study2 = read.csv("study2_variablenames.csv", header = TRUE)
+variables_study3 = read.csv("study3_variablenames.csv", header = FALSE)
+variables_study7 = read.csv("study7_variablenames.csv", header = FALSE)
+names(study7) = variables_study7[, 1] #use short names; column 2 has the full items
+
+#these studies include ratings collected separately
+study4 = merge (study4, read.csv("study4_helpfulness.csv"), by = "Response.ID")
+study5 = merge (study5, read.csv("study5_helpfulness.csv"), by = "Response.ID")
+study6 = merge (study6, read.csv("study6_helpfulness.csv"), by = "Response.ID")
+study7 = merge (study7, read.csv("study7_helpfulness.csv"), by = "Response.ID")
+
+# starting sample size
+# did I do any excel exclusions that wouldn't be noted here? (probably study 3)
+starting_sample = list(
+  "Study 1" = dim(study1)[1],
+  "Study 2" = dim(study2)[1],
+  "Study 3" = dim(study3)[1],
+  "Study 4" = dim(study4)[1],
+  "Study 5" = dim(study5)[1],
+  "Study 6" = dim(study6)[1],
+  "Study 7" = dim(study7)[1]
+  )
+```
+
+## Variables of Interest
+For Study 3 there are so many items that (at least for now) I have just numbered them rather than givng them a handy short label.
+The variables for studies 4 and 5 were nearly identical, with only a few DVs differing. 
+Studies 6 & 7 have many more items because of the repeated measures aspect of the designs.
+
+### Identifying conditions
+#### Study 1
+Study 1 included three video conditions: 1-pro, 2-anti, 3-neut.
+```{r}
+study1$condition = substring(study1$condition, nchar(as.character(study1$condition)) , nchar(as.character(study1$condition)) ) #trims unneeded text
+study1$condition_code = as.numeric(study1$condition)  #useful for attention check coding
+study1$condition = as.factor(ifelse(study1$condition==1, "prosocial", ifelse(study1$condition==2, "antisocial", "neutral")))
+study1$prosocial_condition = ifelse(study1$condition=="prosocial", 1, 0) 
+```
+
+#### Study 2
+Study 2 included two video conditions: 1-pro, 2-ant
+```{r}
+study2$condition = as.factor(ifelse(study2$condition=="pro", "prosocial", ifelse(study2$condition=="ant", "antisocial", "ERROR")))
+study2$prosocial_condition = ifelse(study2$condition=="prosocial", 1, 0) 
+study2$condition_code = ifelse(study2$prosocial_condition==1, 1, 2) #useful for attention check coding
+```
+
+#### Study 3
+Study 3 included prosocial, antisocial, and neutral conditions.
+```{r}
+study3$prosocial_condition = ifelse(study3$condition=="prosocial", 1, 0) 
+```
+
+####Study 4
+Study 4 was a 2x2 design with cells:  
+`r levels(study4$branch)`
+```{r}
+# this could be cleaner, but it works
+study4$condition=as.factor(strtrim(study4$branch, 6))
+levels(study4$condition)
+study4$prosocial_condition = ifelse(study4$condition=="Elevat", 1, ifelse(study4$condition=="Contro", 0, NA))
+
+study4$optin=as.numeric(grepl("Opt-in", study4$branch))
+```
+
+####Study 5
+Study 5 just has Parkour (control) and Thai (prosocial_condition) conditions.  
+
+```{r}
+study5$prosocial_condition = ifelse(study5$condition=="Thai", 1, ifelse(study5$condition=="Parkour", 0, NA))
+```
+
+####Study 6 & 7 
+Study 6 and 7 were a 2 (order) x 2 (condition) design with cells: `r levels(study6$Cell)` and `r levels(study7$Cell)`. Separate these out, in text and dummy coding forms:
+```{r}
+study6$condition = substring(study6$Cell, 3)
+study6$prosocial_condition = ifelse(study6$condition=="thai", 1, ifelse(study6$condition=="parkour", 0, NA))
+
+study6$order = substring(study6$Cell, 1, 1)
+study6$orderA =  ifelse(study6$order=="A", 1, ifelse(study6$order=="B", 0, NA))
+
+study7$condition = substring(study7$Cell, 7)
+study7$prosocial_condition = ifelse(study7$condition=="thai", 1, ifelse(study7$condition=="parkour", 0, NA))
+
+study7$order = substring(study7$Cell, 1, 5)
+study7$orderA =  ifelse(study7$order=="A1 B2", 1, ifelse(study7$order=="B1 A2", 0, NA))
+```
+
+### Condensing variables
+Sometimes my SurveyGizmo set up requires the same question to be reported in more than one column, typically because of branching logic. In this section I condense those into a single variable.
+
+*I bet some package has a better way to do this.*
+
+####Study 4
+The "opt-in" vs. "opt-out" framings presented basically the same charitable donation question.
+
+```{r}
+study4$charity=rowMeans(study4[,c("optin","optout")],na.rm=TRUE) # this is goofy but it works
+```
+
+#### Study 6
+Identical tems were presented before and/or after the manipulation.
+
+For example, the variables "a.honest.pre" and "a.honest.post" refer to the same attitude scale item (hence "a.xxxxxxx") and whether it was asked pre- or post-manipulation. It was asked before the manipulation in order A, after in order B. I just want one variable "a.honest" and use variable "order" to separate pre-/post-manipulation when needed. The code below condenses all relevant variables.
+
+*I'm not sure that this is the best way to proceed, from the perspective of data structure, but I'm going ahead for now. I'm probably choosing brute force over efficiency, but maybe the efficient solution will emerge.*
+
+*More importantly, there's probably some text-function based way (package "stringr" ?) to simplify the shit out of this--this monstrosity is another instance of using brute force over efficiency for now.*
+
+*I bet some package makes this simpler. {tidyR} maybe?*
+
+```{r}
+#Attitude: In block A, before the video. After in block B. (attitude.preA.postB)
+study6$a.honest = ifelse(study6$order=="A", study6$a.honest.pre, study6$a.honest.post)
+study6$a.malicious = ifelse(study6$order=="A", study6$a.malicious.pre, study6$a.malicious.post)
+study6$a.noadvantage = ifelse(study6$order=="A", study6$a.noadvantage.pre, study6$a.noadvantage.post)
+study6$a.pessimistic = ifelse(study6$order=="A", study6$a.pessimistic.pre, study6$a.pessimistic.post)
+study6$a.befair = ifelse(study6$order=="A", study6$a.befair.pre, study6$a.befair.post)
+study6$a.nothelpful = ifelse(study6$order=="A", study6$a.nothelpful.pre, study6$a.nothelpful.post)
+study6$a.trustworthy = ifelse(study6$order=="A", study6$a.trustworthy.pre, study6$a.trustworthy.post)
+study6$a.notgood  = ifelse(study6$order=="A", study6$a.notgood.pre,study6$a.notgood.post)
+study6$a.dontbecareful  = ifelse(study6$order=="A", study6$a.dontbecareful.pre,study6$a.dontbecareful.post)
+study6$a.inottrust  = ifelse(study6$order=="A", study6$a.inottrust.pre,study6$a.inottrust.post)
+study6$a.lookoutothers = ifelse(study6$order=="A", study6$a.lookoutothers.pre,study6$a.lookoutothers.post)
+study6$a.peoplenottrust = ifelse(study6$order=="A", study6$a.peoplenottrust.pre,study6$a.peoplenottrust.post)
+study6$a.good = ifelse(study6$order=="A", study6$a.good.pre,study6$a.good.post)
+study6$a.careonly = ifelse(study6$order=="A", study6$a.careonly.pre,study6$a.careonly.post)
+study6$a.awful = ifelse(study6$order=="A", study6$a.awful.pre, study6$a.awful.post)
+#attitude.preB.postA
+study6$a.dishonest = ifelse(study6$order=="B", study6$a.dishonest.pre,study6$a.dishonest.post)  
+study6$a.kind = ifelse(study6$order=="B", study6$a.kind.pre,study6$a.kind.post)  
+study6$a.takeadvantage = ifelse(study6$order=="B", study6$a.takeadvantage.pre,study6$a.takeadvantage.post)  
+study6$a.optimistic = ifelse(study6$order=="B", study6$a.optimistic.pre,study6$a.optimistic.post)  
+study6$a.notfair = ifelse(study6$order=="B", study6$a.notfair.pre,study6$a.notfair.post)  
+study6$a.helpful = ifelse(study6$order=="B", study6$a.helpful.pre,study6$a.helpful.post)  
+study6$a.nottrustworthy = ifelse(study6$order=="B", study6$a.nottrustworthy.pre, study6$a.nottrustworthy.post)
+study6$a.canbegood = ifelse(study6$order=="B", study6$a.canbegood.pre,study6$a.canbegood.post)  
+study6$a.becareful = ifelse(study6$order=="B", study6$a.becareful.pre,study6$a.becareful.post)  
+study6$a.itrust = ifelse(study6$order=="B", study6$a.itrust.pre,study6$a.itrust.post)
+study6$a.lookoutself = ifelse(study6$order=="B", study6$a.lookoutself.pre, study6$a.lookoutself.post)  
+study6$a.peopletrust = ifelse(study6$order=="B", study6$a.peopletrust.pre, study6$a.peopletrust.post) 
+study6$a.evil = ifelse(study6$order=="B", study6$a.evil.pre,study6$a.evil.post)  
+study6$a.admirable = ifelse(study6$order=="B", study6$a.admirable.pre,study6$a.admirable.post)  
+study6$a.caremore = ifelse(study6$order=="B", study6$a.caremore.pre,study6$a.caremore.post)  
+
+#prosocial.motives.preA.postB = c("e.wanttohelp","e.feelclose","e.newhelp")
+study6$e.wanttohelp = ifelse(study6$order=="A", study6$e.wanttohelp.pre, study6$e.wanttohelp.post)
+study6$e.feelclose = ifelse(study6$order=="A", study6$e.feelclose.pre, study6$e.feelclose.post)
+study6$e.newhelp = ifelse(study6$order=="A", study6$e.newhelp.pre, study6$e.newhelp.post)
+
+#prosocial.motives.preB.postA = c("e.donate","e.worlddeserves","e.betterperson")
+study6$e.donate = ifelse(study6$order=="B", study6$e.donate.pre, study6$e.donate.post)
+study6$e.worlddeserves = ifelse(study6$order=="B", study6$e.worlddeserves.pre, study6$e.worlddeserves.post)
+study6$e.betterperson = ifelse(study6$order=="B", study6$e.betterperson.pre, study6$e.betterperson.post)
+
+#positive.affect = c("pa.happy", "pa.amused","pa.delighted","pa.entertained")
+
+#positive.affect.preA.postB = c("pa.happy", "pa.amused") 
+study6$pa.happy = ifelse(study6$order=="A", study6$pa.happy.pre, study6$pa.happy.post)
+study6$pa.amused = ifelse(study6$order=="A", study6$pa.amused.pre, study6$pa.amused.post)
+
+#positive.affect.preB.postA = c("pa.delighted","pa.entertained") 
+study6$pa.delighted = ifelse(study6$order=="B", study6$pa.delighted.pre, study6$pa.delighted.post)
+study6$pa.entertained = ifelse(study6$order=="B",study6$pa.entertained.pre, study6$pa.entertained.post)
+
+#elevating.emotions.pre  = c("e.uplifted.pre","e.compassion.pre","e.admiration.pre","e.heartwarming.pre","e.moved.pre","e.touched.pre","e.inspired.pre")
+study6$e.uplifted.pre =ifelse(study6$order=="A", study6$e.uplifted.pre1 ,study6$e.uplifted.pre2)
+study6$e.compassion.pre =ifelse(study6$order=="A", study6$e.compassion.pre1 ,study6$e.compassion.pre2)
+study6$e.admiration.pre =ifelse(study6$order=="A", study6$e.admiration.pre1 ,study6$e.admiration.pre2)
+study6$e.heartwarming.pre=ifelse(study6$order=="A", study6$e.heartwarming.pre1 ,study6$e.heartwarming.pre2)
+study6$e.moved.pre =ifelse(study6$order=="A", study6$e.moved.pre1 ,study6$e.moved.pre2)
+study6$e.touched.pre =ifelse(study6$order=="A", study6$e.touched.pre1 ,study6$e.touched.pre2)
+study6$e.inspired.pre =ifelse(study6$order=="A", study6$e.inspired.pre1 ,study6$e.inspired.pre2)
+
+#elevating.emotions.post = c("e.uplifted.post","e.compassion.post","e.admiration.post","e.heartwarming.post","e.moved.post","e.touched.post","e.inspired.post")
+study6$e.uplifted.post =ifelse(study6$order=="A", study6$e.uplifted.post1 ,study6$e.uplifted.post2)
+study6$e.compassion.post =ifelse(study6$order=="A", study6$e.compassion.post1 ,study6$e.compassion.post2)
+study6$e.admiration.post =ifelse(study6$order=="A", study6$e.admiration.post1 ,study6$e.admiration.post2)
+study6$e.heartwarming.post=ifelse(study6$order=="A", study6$e.heartwarming.post1 ,study6$e.heartwarming.post2)
+study6$e.moved.post =ifelse(study6$order=="A", study6$e.moved.post1 ,study6$e.moved.post2)
+study6$e.touched.post =ifelse(study6$order=="A", study6$e.touched.post1 ,study6$e.touched.post2)
+study6$e.inspired.post =ifelse(study6$order=="A", study6$e.inspired.post1 ,study6$e.inspired.post2)
+```
+
+####Study 7
+
+```{r}
+study7$a.honest = ifelse(study7$orderA=="1", study7$a.honest.pre, study7$a.honest.post)
+study7$a.malicious = ifelse(study7$orderA=="1", study7$a.malicious.pre, study7$a.malicious.post)
+study7$a.noadvantage = ifelse(study7$orderA=="1", study7$a.noadvantage.pre, study7$a.noadvantage.post)
+study7$a.pessimistic = ifelse(study7$orderA=="1", study7$a.pessimistic.pre, study7$a.pessimistic.post)
+study7$a.befair = ifelse(study7$orderA=="1", study7$a.befair.pre, study7$a.befair.post)
+study7$a.nothelpful = ifelse(study7$orderA=="1", study7$a.nothelpful.pre, study7$a.nothelpful.post)
+study7$a.trustworthy = ifelse(study7$orderA=="1", study7$a.trustworthy.pre, study7$a.trustworthy.post)
+study7$a.notgood  = ifelse(study7$orderA=="1", study7$a.notgood.pre,study7$a.notgood.post)
+study7$a.dontbecareful  = ifelse(study7$orderA=="1", study7$a.dontbecareful.pre,study7$a.dontbecareful.post)
+study7$a.inottrust  = ifelse(study7$orderA=="1", study7$a.inottrust.pre,study7$a.inottrust.post)
+study7$a.lookoutothers = ifelse(study7$orderA=="1", study7$a.lookoutothers.pre,study7$a.lookoutothers.post)
+study7$a.peoplenottrust = ifelse(study7$orderA=="1", study7$a.peoplenottrust.pre,study7$a.peoplenottrust.post)
+study7$a.good = ifelse(study7$orderA=="1", study7$a.good.pre,study7$a.good.post)
+study7$a.notadmirable = ifelse(study7$orderA=="1", study7$a.notadmirable.pre, study7$a.notadmirable.post)
+study7$a.careonly = ifelse(study7$orderA=="1", study7$a.careonly.pre,study7$a.careonly.post)
+
+#attitude.preB.postA
+study7$a.dishonest = ifelse(study7$orderA=="0", study7$a.dishonest.pre,study7$a.dishonest.post)  
+study7$a.kind = ifelse(study7$orderA=="0", study7$a.kind.pre, study7$a.kind.post)
+study7$a.takeadvantage = ifelse(study7$orderA=="0", study7$a.takeadvantage.pre,study7$a.takeadvantage.post)  
+study7$a.optimistic = ifelse(study7$orderA=="0", study7$a.optimistic.pre,study7$a.optimistic.post)  
+study7$a.notfair = ifelse(study7$orderA=="0", study7$a.notfair.pre,study7$a.notfair.post)  
+study7$a.helpful = ifelse(study7$orderA=="0", study7$a.helpful.pre,study7$a.helpful.post)  
+study7$a.nottrustworthy = ifelse(study7$orderA=="0", study7$a.nottrustworthy.pre, study7$a.nottrustworthy.post)
+study7$a.canbegood = ifelse(study7$orderA=="0", study7$a.canbegood.pre,study7$a.canbegood.post)  
+study7$a.becareful = ifelse(study7$orderA=="0", study7$a.becareful.pre,study7$a.becareful.post)  
+study7$a.itrust = ifelse(study7$orderA=="0", study7$a.itrust.pre,study7$a.itrust.post)
+study7$a.lookoutself = ifelse(study7$orderA=="0", study7$a.lookoutself.pre, study7$a.lookoutself.post)  
+study7$a.peopletrust = ifelse(study7$orderA=="0", study7$a.peopletrust.pre, study7$a.peopletrust.post) 
+study7$a.littlegood = ifelse(study7$orderA=="0", study7$a.littlegood.pre,study7$a.littlegood.post)  
+study7$a.admirable = ifelse(study7$orderA=="0", study7$a.admirable.pre,study7$a.admirable.post)  
+study7$a.caremore = ifelse(study7$orderA=="0", study7$a.caremore.pre,study7$a.caremore.post)  
+```
+
+### Reverse-scoring
+Many analyses are more convenient if elevation/idealism/prosociality is higher.
+
+####Study 2
+```{r}
+study2$shape2 <-  6-study2$shape2
+```
+
+####Study3
+Here I'm reversing attitude items such that idealism is always higher. Not bothering with the many other items.
+```{r}
+names(study3)[5:14] = c(
+  "a.dishonest",
+  "a.kind",
+  "a.itrust",
+  "a.nottrust",
+  "a.trustworthy",
+  "a.takeadvantage",
+  "a.befair",
+  "a.careful",
+  "a.helpful",
+  "a.lookingout"
+  )
+study3$a.dishonest<-8-study3$a.dishonest 
+study3$a.nottrust<-8-study3$a.nottrust
+study3$a.takeadvantage<-8-study3$a.takeadvantage
+study3$a.careful<-8-study3$a.careful
+study3$a.lookingout<-8-study3$a.lookingout
+```
+
+####Study 4
+```{r}
+study4$a.dishonest=8-study4$a.dishonest 
+study4$a.nottrust=8-study4$a.nottrust
+study4$a.takeadvantage=8-study4$a.takeadvantage
+study4$a.careful=8-study4$a.careful
+study4$a.lookingout=8-study4$a.lookingout
+study4$shape2=6-study4$shape2
+```
+
+####Study 5
+```{r}
+study5$a.dishonest=8-study5$a.dishonest 
+study5$a.nottrust=8-study5$a.nottrust
+study5$a.takeadvantage=8-study5$a.takeadvantage
+study5$a.careful=8-study5$a.careful
+study5$a.lookingout=8-study5$a.lookingout
+study5$shape=6-study5$shape
+```
+
+####Study 6
+```{r}
+study6$a.malicious = 8 - study6$a.malicious
+study6$a.pessimistic = 8 - study6$a.pessimistic
+study6$a.nothelpful = 8 - study6$a.nothelpful
+study6$a.notgood = 8 - study6$a.notgood
+study6$a.inottrust = 8 - study6$a.inottrust
+study6$a.peoplenottrust = 8 - study6$a.peoplenottrust
+study6$a.dishonest = 8 - study6$a.dishonest
+study6$a.takeadvantage = 8 - study6$a.takeadvantage
+study6$a.notfair = 8 - study6$a.notfair
+study6$a.nottrustworthy = 8 - study6$a.nottrustworthy
+study6$a.becareful = 8 - study6$a.becareful
+study6$a.lookoutself = 8 - study6$a.lookoutself
+
+study6$a.evil = 3 - study6$a.evil
+study6$a.careonly = 3 - study6$a.careonly
+study6$a.awful = 3 - study6$a.awful
+
+study6$shape = 6 - study6$shape
+```
+
+####Study 7
+```{r}
+study7$a.malicious = 8 - study7$a.malicious
+study7$a.pessimistic = 8 - study7$a.pessimistic
+study7$a.nothelpful = 8 - study7$a.nothelpful
+study7$a.notgood = 8 - study7$a.notgood
+study7$a.inottrust = 8 - study7$a.inottrust
+study7$a.peoplenottrust = 8 - study7$a.peoplenottrust
+study7$a.notadmirable = 8 - study7$a.notadmirable
+study7$a.careonly = 8 - study7$a.careonly
+
+study7$a.dishonest = 8 - study7$a.dishonest
+study7$a.takeadvantage = 8 - study7$a.takeadvantage
+study7$a.notfair = 8 - study7$a.notfair
+study7$a.nottrustworthy = 8 - study7$a.nottrustworthy
+study7$a.becareful = 8 - study7$a.becareful
+study7$a.lookoutself = 8 - study7$a.lookoutself
+study7$a.littlegood = 8 - study7$a.littlegood
+
+study7$shape1 = 6 - study7$shape1
+study7$shape2 = 6 - study7$shape2
+```
+
+
+
+### Response options clarifications
+I don't see a SurveyMonkey option to export the survey including the response options, so I had to manually log in and look up what the numeric reporting values are. 
+
+```{r}
+#after study 1 we dropped the words and made the others likert-like rather than binary
+study1$word1 = as.factor(ifelse(study1$word1 == 1, "kiki", "bouba"))
+study1$word2 = as.factor(ifelse(study1$word2 == 1, "maluma", "taketa"))
+study1$shape1 = as.factor(ifelse (study1$shape1 == 1, "spike explosion", "cloud"))
+study1$shape2 = as.factor(ifelse (study1$shape2 == 1, "boomerang", "spikerang"))
+study1$circles = as.factor(ifelse (study1$circles == 1, "close", "far"))
+
+#these are basicallly binary endorsements
+study1$circle.reason1 = as.numeric(is.na(study1$circle.reason1) == FALSE)
+study1$circle.reason2 = as.numeric(is.na(study1$circle.reason2) == FALSE)
+study1$circle.reason3 = as.numeric(is.na(study1$circle.reason3) == FALSE)
+study1$circle.reason4 = as.numeric(is.na(study1$circle.reason4) == FALSE)
+study1$circle.reason5 = as.numeric(is.na(study1$circle.reason5) == FALSE)
+study1$circle.reason6 = as.numeric(is.na(study1$circle.reason6) == FALSE)
+
+study2$circle.reason1 = as.numeric(is.na(study2$circle.reason1) == FALSE)
+study2$circle.reason2 = as.numeric(is.na(study2$circle.reason2) == FALSE)
+study2$circle.reason3 = as.numeric(is.na(study2$circle.reason3) == FALSE)
+study2$circle.reason4 = as.numeric(is.na(study2$circle.reason4) == FALSE)
+study2$circle.reason5 = as.numeric(is.na(study2$circle.reason5) == FALSE)
+study2$circle.reason6 = as.numeric(is.na(study2$circle.reason6) == FALSE)
+```
+
+### Demographic variable clean-up.
+####Height
+```{r}
+study1$halfinch[is.na(study1$halfinch)]=0
+study2$halfinch[is.na(study2$halfinch)]=0
+study3$halfinch[is.na(study3$halfinch)]=0
+
+study1$height= (12*(study1$feet+2)) + study1$inch-1 + ifelse(study1$halfinch ==2, 0.5, 0) #1st option for # of feet was 3, for inches 0
+study2$height= (12*(study2$feet+2)) + study2$inch-1 + ifelse(study2$halfinch ==2, 0.5, 0) #1st option for # of feet was 3, for inches 0
+study3$height= (12*(study3$feet+2)) + study3$inch-1 + ifelse(study3$halfinch ==2, 0.5, 0) #1st option for # of feet was 3, for inches 0
+study4$height= (12*study4$feet) + study4$inches
+study5$height= (12*study5$feet) + study5$inches
+study6$height= (12*study6$feet) + study6$inches
+study7$height= (12*study7$feet) + study7$inches
+
+study1$height[study1$height==45]=NA #extreme value
+study6$height[study6$height==48]=NA #extreme value
+
+study1$height_z = scale(study1$height, center=T, scale=T)
+study2$height_z = scale(study2$height, center=T, scale=T)
+study3$height_z = scale(study3$height, center=T, scale=T)
+study4$height_z = scale(study4$height, center=T, scale=T)
+study5$height_z = scale(study5$height, center=T, scale=T)
+study6$height_z = scale(study6$height, center=T, scale=T)
+study7$height_z = scale(study7$height, center=T, scale=T)
+```
+
+#### Age
+```{r}
+study1$age[study1$age==1992]= 2015-1992 #i assume they entered birth year
+study1$age[study1$age==1994]= 2015-1994 #i assume they entered birth year
+study2$age[study2$age==256]=NA #extreme value
+study4$age[study4$age==300]=NA #extreme value
+study5$age[study5$age==2]=NA #extreme value
+
+study1$age_z = scale(study1$age, center=T, scale=T)
+study2$age_z = scale(study2$age, center=T, scale=T)
+study3$age_z = scale(study3$age, center=T, scale=T)
+study4$age_z = scale(study4$age, center=T, scale=T)
+study5$age_z = scale(study5$age, center=T, scale=T)
+study6$age_z = scale(study6$age, center=T, scale=T)
+study7$age_z = scale(study7$age, center=T, scale=T)
+```
+
+####Political orientation
+```{r}
+study4$political[study4$political=="na" | study4$political==""]=NA
+study5$political[study5$political=="na" | study5$political==""]=NA
+study6$political[study6$political=="na" | study6$political==""]=NA 
+study7$political[study7$political=="na" | study7$political==""]=NA 
+
+study4$political=droplevels(study4$political)
+study4$political =as.numeric(study4$political)
+
+study5$political=droplevels(study5$political)
+study5$political =as.numeric(study5$political)
+
+study6$political=droplevels(study6$political)
+study6$political =as.numeric(study6$political)
+
+study7$political=droplevels(study7$political)
+study7$political =as.numeric(study7$political)
+```
+
+####Sex
+Participants have the option to skip this item or pick "other / prefer not to say." Vast majority pick male or female, so those are the only analyzable categories.
+```{r}
+study1$sex = as.factor(study1$sex)
+study1$sex[study1$sex==0] = NA 
+study1$sex=droplevels(study1$sex) 
+
+study2$sex = as.factor(study2$sex)
+
+study4$sex[study4$sex==""|study4$sex=="na"]=NA
+study4$sex=droplevels(study4$sex) 
+
+study5$sex[study5$sex==""|study5$sex=="na"]=NA
+study5$sex=droplevels(study5$sex) 
+
+study6$sex[study6$sex==""|study6$sex=="na"]=NA
+study6$sex=droplevels(study6$sex) 
+
+study7$sex[study7$sex==""|study7$sex=="na"]=NA
+study7$sex=droplevels(study7$sex) 
+```
+
+#### Income
+I could probably adjust the input for this item to simplify this cleaning operation.
+```{r}
+#playground
+#table(study4$income, useNA="always")
+#a = as.character(study4$income)
+#b=as.numeric(gsub(",", "", a))
+#a[is.na(b)]
+#a
+
+study1$income[study1$income==""] = NA
+
+study4$income[study4$income=="rather not"|study4$income==""]=NA
+study4$income[study4$income=="$20,000 "] = 20000
+study5$income[study5$income=="no clue"|study5$income==""]=NA
+study6$income[study6$income=="homeless graduate student"|study6$income==""]=NA
+study7$income[study7$income==""]=NA
+
+#study1$income = droplevels(study1$income) #not sure if i need this -- test next time i run in order
+study4$income = droplevels(study4$income)
+study5$income = droplevels(study5$income)
+study6$income = droplevels(study6$income)
+study7$income = droplevels(study7$income)
+
+study1$income=as.numeric(gsub(",", "", study1$income))
+study4$income=as.numeric(gsub(",", "", study4$income))
+study5$income=as.numeric(gsub(",", "", study5$income))
+study6$income=as.numeric(gsub(",", "", study6$income))
+study7$income=gsub(",", "", study7$income)
+study7$income=as.numeric(gsub("\\$", "", study7$income))
+
+#used as demographic control variables, so scale them to make effects interpretable
+study1$income_z=as.numeric(scale(study1$income,scale=TRUE,center=TRUE))
+study2$income_z=as.numeric(scale(study2$income,scale=TRUE,center=TRUE))
+study3$income_z=as.numeric(scale(study3$income,scale=TRUE,center=TRUE))
+study4$income_z=as.numeric(scale(study4$income,scale=TRUE,center=TRUE))
+study5$income_z=as.numeric(scale(study5$income,scale=TRUE,center=TRUE))
+study6$income_z=as.numeric(scale(study6$income,scale=TRUE,center=TRUE))
+study7$income_z=as.numeric(scale(study7$income,scale=TRUE,center=TRUE))
+```
+
+####Education
+In each case I condense response codes 1 and 2 into "high school or less" and 6, 7, and 8 into "some grad school or more."
+```{r}
+study1$hs_less = as.numeric(study1$education < 3)
+study1$some_college = as.numeric(study1$education == "3")
+study1$AA = as.numeric(study1$education == "4")
+study1$BA = as.numeric(study1$education == "5")
+study1$grad_school = as.numeric(study1$education > 5)
+
+study2$hs_less = as.numeric(study2$education < 3)
+study2$some_college = as.numeric(study2$education == "3")
+study2$AA = as.numeric(study2$education == "4")
+study2$BA = as.numeric(study2$education == "5")
+study2$grad_school = as.numeric(study2$education > 5)
+
+study3$hs_less = as.numeric(study3$education < 3)
+study3$some_college = as.numeric(study3$education == "3")
+study3$AA = as.numeric(study3$education == "4")
+study3$BA = as.numeric(study3$education == "5")
+study3$grad_school = as.numeric(study3$education > 5)
+
+study4$hs_less = as.numeric(study4$education < 3)
+study4$some_college = as.numeric(study4$education == "3")
+study4$AA = as.numeric(study4$education == "4")
+study4$BA = as.numeric(study4$education == "5")
+study4$grad_school = as.numeric(study4$education > 5)
+
+study5$hs_less = as.numeric(study5$education < 3)
+study5$some_college = as.numeric(study5$education == "3")
+study5$AA = as.numeric(study5$education == "4")
+study5$BA = as.numeric(study5$education == "5")
+study5$grad_school = as.numeric(study5$education > 5)
+
+study6$hs_less = as.numeric(study6$education < 3)
+study6$some_college = as.numeric(study6$education == "3")
+study6$AA = as.numeric(study6$education == "4")
+study6$BA = as.numeric(study6$education == "5")
+study6$grad_school = as.numeric(study6$education > 5)
+
+study7$hs_less = as.numeric(study7$education < 3)
+study7$some_college = as.numeric(study7$education == "3")
+study7$AA = as.numeric(study7$education == "4")
+study7$BA = as.numeric(study7$education == "5")
+study7$grad_school = as.numeric(study7$education > 5)
+
+```
+#### Ethnicity
+Majority of each sample is white, so for now just code for white / non-white.
+```{r}
+study1$nonwhite = as.numeric(study1$ethnic!=1)
+study2$nonwhite = as.numeric(study2$ethnic!=1)
+study4$nonwhite = as.numeric(study4$ethnic!="White")
+study5$nonwhite = as.numeric(study5$ethnic!="White")
+study6$nonwhite = as.numeric(study6$ethnic!="White")
+study7$nonwhite = as.numeric(study7$ethnic!="White")
+```
+#### Pregnancy
+The reported number of pregnancies was small, so this variable is ignored.
+
+## Exclusions
+
+### Examine information relevant to potential exclusions
+#### Duplicate IP
+Study 1 & 2 have some of these. But we used the unique Turker method so repeats must have used different MTurk identities.
+
+What were settings on other studies?
+
+#### Finishing time
+The threshold for minimum acceptible time is somewhat arbitrary. In most conditions (expection: Study 4 Control) participants had to watch a 3 minute video. 
+
+```{r}
+library(lubridate)
+
+study1$time=as.numeric(difftime(mdy_hms(study1$EndDate), mdy_hms(study1$StartDate)))/60
+study2$time=as.numeric(difftime(mdy_hms(study2$EndDate), mdy_hms(study2$StartDate)))/60
+study3$time=as.numeric(difftime(mdy_hm(study3$EndDate), mdy_hm(study3$StartDate)))
+study4$time=as.numeric(difftime(mdy_hm(study4$Date.Submitted), mdy_hm(study4$Time.Started)))
+study5$time=as.numeric(difftime(mdy_hm(study5$Date.Submitted), mdy_hm(study5$Time.Started)))
+study6$time=as.numeric(difftime(mdy_hm(study6$Date.Submitted), mdy_hm(study6$Time.Started)))
+study7$time=as.numeric(difftime(ymd_hms(study7$Date.Submitted), ymd_hms(study7$Time.Started))) 
+#I have just noticed that the study7 date/time format is the source format for all studies, but using Excel in my workflow eliminated the seconds data. I used LibreCalc for study7 and study1 and retain the seconds. Probably not worth recoding old data for a slightly more precise time estimate, but good to know for future.
+
+hist(study1$time, breaks=300)
+hist(study2$time, breaks=300)
+table(study3$time)
+table(study4$time, by=study4$condition)
+table(study5$time)
+table(study6$time)
+hist(study7$time, breaks=500)
+``` 
+
+The distributions of responses above suggest that studies 1, 2, 4 and 5 would require at minimum another 2 minutes to finish all questions, Studies 4 and 6 would require 3 more minutes, Study 7 requires 3.5 more. These seem intuitively reasonable, so later I will implement those cutoffs.
+
+#### Missing items
+This is important for study 1.
+
+Later studies handle this in relevant analyses.
+
+```{r}
+# study1
+study1$missing = rowSums(is.na(study1)) #keep missing < 18
+study2$missing = rowSums(is.na(study2)) #keep missing < 18
+
+#later studies?
+#count up missing items from the key scales.
+# study6$missing = rowSums(is.na(study6[,c(attitude, elevating.emotions.pre, elevating.emotions.post, positive.affect, prosocial.motives)]))
+```
+
+#### Playback problems
+##### Study 4
+Exclusions based on playback problems were done manually in spreadsheet software.
+
+##### Study 5
+`r length(subset(study5$playback, study5$playback!=1))` people reported playback problems. Of these, `r length(subset(study5$playback, study5$playback==2))` were reported as "minor." Here are the descriptions they provided:
+```{r}
+as.character(subset(study5, study5$playback==2)$playback.problems)
+```
+Based on those descriptions, I judge that none of these cases need to be eliminated. "Major problems" were reported by `r length(subset(study5$playback, study5$playback==3))` participants. They described them:
+```{r}
+as.character(subset(study5, study5$playback==3)$playback.problems)
+```
+Based on these descriptions, I judge that all these cases should be eliminated.
+
+##### Study 6
+`r length(subset(study6$playback, study6$playback!=1))` people reported playback problems. Of these, `r length(subset(study6$playback, study6$playback==2))` were reported as "minor." Here are the descriptions they provided:
+```{r}
+as.character(subset(study6, study6$playback==2)$playback.problems)
+```
+Based on those descriptions, I judge that none of these cases need to be eliminated. "Major problems" were reported by `r length(subset(study6$playback, study6$playback==3))` participants. They described them:
+```{r}
+as.character(subset(study6, study6$playback==3)$playback.problems)
+```
+Based on these descriptions, I judge that all these cases should be eliminated.
+
+
+```{r include = FALSE}
+# Picking out those playback problem subsets resulted in some weird NA-related errors. The as.character() move superficially solved them. And they look accurate too. But there's some glitch here I don't understand. I tried the fixes below without success.
+#study6$Response.ID = as.character(study6$Response.ID)
+#study6$Response.ID = droplevels(study6$Response.ID)
+```
+
+
+```{r include=FALSE}
+#There might be slight trends towards less missing data and less quick finishing in thai condition.
+table(study6$missing[study6$condition=="parkour"],useNA = "always")
+table(study6$missing[study6$condition=="thai"],useNA = "always")
+
+mean(subset(study6$missing, study6$condition == "thai")) 
+mean(subset(study6$missing, study6$condition == "parkour")) 
+
+table(study6$time[study6$condition=="parkour"], useNA = "always")
+table(study6$time[study6$condition=="thai"], useNA = "always")
+```
+
+##### Study 7
+`r length(subset(study7$playback, study7$playback!=1))` people reported playback problems. Of these, `r length(subset(study7$playback, study7$playback==2))` were reported as "minor." Here are the descriptions they provided:
+```{r}
+as.character(subset(study7, study7$playback==2)$playback.problems)
+```
+Based on those descriptions, I judge that one should be reclassified as a major problem. 
+```{r}
+study7[study7$playback.problems=="Second video didn't really place but I still enjoyed the blank screen made me feel all warm and good inside.",]$playback = 3
+```
+
+
+
+"Major problems" were reported by `r length(subset(study7$playback, study7$playback==3))` participants. They described them:
+```{r}
+as.character(subset(study7, study7$playback==3)$playback.problems)
+```
+Based on these descriptions, I judge that all these cases should be eliminated.
+
+
+
+
+
+
+### Exclude in data set
+
+This code makes all of the eliminations.
+
+```{r}
+study1 = subset (study1, study1$check1==1 & study1$check2==26 & study1$check3==1+study1$condition_code & study1$missing < 18)
+study2 = subset (study2, study2$check_alphabet==26 & study2$check_video==1+study2$condition_code & study2$missing < 18)
+study3 = subset (study3, (study3$vidcheck==2 & study3$condition=="prosocial") | (study3$vidcheck==3 & study3$condition== "antisocial") | (study3$vidcheck==4 & study3$condition=="neutral")) #i did this in excel but this could replace that
+
+study4 = subset (study4, study4$check == "blue")
+study5 = subset (study5, study5$check == "blue")
+study6 = subset (study6, study6$check == "blue")
+study7 = subset (study7, study7$check == "blue")
+
+study4 = subset(study4, study4$device != "Phone")
+study5 = subset(study5, study5$device != "Phone")
+study6 = subset(study6, study6$device != "Phone")
+study7 = subset(study7, study7$device != "Phone")
+
+study1=subset(study1, study1$time>5)
+study2=subset(study2, study2$time>5)
+study3=subset(study3, study3$time>6)
+study4=subset(study4, study4$time>1 & study4$condition=="Contro" | study4$time>4 & study4$condition=="Elevat")
+study5=subset(study5, study5$time>4)
+study6=subset(study6, study6$time>5) 
+study7=subset(study7, study7$time>6.5)
+
+# drops "serious playback problems"" from the data set.
+study4=subset(study4, study4$playback==1 | study4$playback==2 | is.na(study4$playback)=="TRUE")
+study5=subset(study5, study5$playback==1 | study5$playback==2 | is.na(study5$playback)=="TRUE")
+study6=subset(study6, study6$playback==1 | study6$playback==2 | is.na(study6$playback)=="TRUE")
+study7=subset(study7, study7$playback==1 | study7$playback==2 | is.na(study7$playback)=="TRUE")
+
+#drop unneeded variables
+study1 = subset(study1, select= -c(CollectorID, currency, complete))
+```
+
+Final Samples
+
+```{r}
+
+final_sample = list(
+  "Study 1" = dim(study1)[1],
+  "Study 2" = dim(study2)[1],
+  "Study 3" = dim(study3)[1],
+  "Study 4" = dim(study4)[1],
+  "Study 5" = dim(study5)[1],
+  "Study 6" = dim(study6)[1],
+  "Study 7" = dim(study7)[1]
+  )
+
+starting_sample
+final_sample
+```
+
+
+(The sum of the exclusion types in each category may not equal the difference between starting and ending sample because some participants registered multiple disqualifiers.) Here are revelant condition breakdowns
+
+```{r}
+summary(study1$condition)
+summary(study2$condition)
+summary(study3$condition)
+summary(study4$branch)
+summary(study5$condition)
+summary(study6$Cell)
+summary(study7$Cell)
+```
+
+## Write clean files for analysis
+```{r}
+write.csv(study1, "study1_cleandata.csv")
+write.csv(study2, "study2_cleandata.csv")
+write.csv(study3, "study3_cleandata.csv")
+write.csv(study4, "study4_cleandata.csv")
+write.csv(study5, "study5_cleandata.csv")
+write.csv(study6, "study6_cleandata.csv")
+write.csv(study7, "study7_cleandata.csv")
+```
+
+## Ways to improve this script
+1. For some of the studies, I did some cleaning in excel. Do all of that here.
+2. Variable short/long names files for every study.
+3. These final clean files aren't "tidy" (in the Wickham sense). Package "tidyR" would help.
+4. Some variable names still include "." (the character for period) -- shift to using "_" (underscore) to avoid confusion with other programming languages where periods are special
+5. Is there some better way to do variable names overall?
+6. The code to drop cases is separate from the code that informs those decisions. They should probably be closer together UNLESS we care how many cases meet each exclusion criteria (because if we eliminate based on criteria 1 before examining criteria 2, our count of violations of 2 would omit cases already eliminated based on criteria 1.)
+7. Package "dplyr" would likely help improve efficency.
