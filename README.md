@@ -16,3 +16,6 @@ Here are some of the required sub-tasks:
 
 -- useful formatting for each variable's data and a key linking this to the source (e.g. participant responses were to a likert scale from "1--strongly disagree to 7--strongly agree" and our data analysis requries just the numeric values)
 
+
+
+I have included the cleaning code for a different project as an example.
