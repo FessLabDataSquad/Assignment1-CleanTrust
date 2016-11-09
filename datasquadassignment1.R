@@ -16,3 +16,6 @@ raw2 = read.csv("RAW DATA game2_results FINAL.csv", header=TRUE)
 
 full_clean_data = merge (( useful shit from "RAW DATA game1_result FINAL.csv", useful shit from 2, 3, etc, etc...))
 
+# This is one way to look for manual errors within a dataframe. The filter() function is a part of dplyr. The grepl() function searches matching character strings. 
+filter(raw1, grepl('apr', dg1))
+#  This code gives us 8 results which have the character string "apr" within the ID column. 7 of the IDs contain "apricot", and 1 ID contains "aprciot". 
