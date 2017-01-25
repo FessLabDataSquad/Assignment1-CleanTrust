@@ -62,7 +62,7 @@ raw1[raw1$dg1 %in% n_occur$Var1[n_occur$Freq > 1],]
 
 #4 Description: This is a way to identify non-matching IDs using the dplyr() package
 #Ex/ of identifying non-matching errors between raw files
-anti_join(raw1, raw5, by="ID")->compare1and5
+anti_join(raw1, raw5, by="dg1")->compare1and5
 
 #shows 4 non-matching IDs: 1pepper1630, test,     , apple0
        
