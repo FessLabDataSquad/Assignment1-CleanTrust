@@ -2,29 +2,31 @@
 
 # This is one way to look for manual errors within a dataframe. The filter() function is a part of dplyr. The grepl() function searches matching character strings. 
 
+#This code gives us 8 results which have the character string "apr" within the ID column. 6 of the IDs contain "apricot", and 2 of the IDs contain "aprciot".
 filter(raw1, grepl('apr', dg1))
-# This code gives us 8 results which have the character string "apr" within the ID column. 6 of the IDs contain "apricot", and 2 of the IDs contain "aprciot".
 
-filter(raw1, grepl('gra', dg1))
 # This code gives us 13 IDs that contain "grape", and 2 of the IDs are the same (5grape1230 appears twice). 
+filter(raw1, grepl('gra', dg1))
 
-filter(raw1, grepl('pum', dg1))
 # This code gives us 12 IDs that contain "pumpkin", and 1 ID does not have the same format as the other IDs (4pumpkin1400\\). 
+filter(raw1, grepl('pum', dg1))
+
 
 # You can also combine the above into one line of code: 
 filter(raw1, grepl('apr|gra|pum', dg1))
 
 
+
 #2 Description: This is one way to produce useful formatting for each variable's data. It also provides a key linking the original item to the new item. However, it involves installing a new package (DataCombine). Maybe dplyr has a cleaner way of reformatting responses?
 
-+# This is one way to format a variable's data. It involves the DataCombine package which is used to clean packages.
+# This is one way to format a variable's data. It involves the DataCombine package which is used to clean packages.
   
 install.packages("DataCombine") 
-+library(DataCombine)
+library(DataCombine)
 
-+#This example shows how to reformat the Likert scale responses. Below is a sample data frame (LikertScale). 
+#This example shows how to reformat the Likert scale responses. Below is a sample data frame (LikertScale). 
   
-  +LikertScale <- data.frame(ratings=c("1 strongly disagree", "4 neither agree nor disagree", "7 strongly agree"))
+LikertScale <- data.frame(ratings=c("1 strongly disagree", "4 neither agree nor disagree", "7 strongly agree"))
 
 # Then, create a dataframe (Replaces) with two columns: left side has the pattern, and right side has the replacement (possible key?) 
 
@@ -33,9 +35,9 @@ Replaces <- data.frame(from=c("1 strongly disagree", "4 neither agree nor disagr
 #This will show as: 
 Replaces
                           from to
-+1          1 strongly disagree  1
-+2 4 neither agree nor disagree  4
-+3             7 strongly agree  7
+1          1 strongly disagree  1
+2 4 neither agree nor disagree  4
+3             7 strongly agree  7
 
 #Then, use the FindReplace() function, which allows you to replace multiple character string patterns within a df's column. 
                           
@@ -56,14 +58,14 @@ n_occur <- data.frame(table(raw1$dg1))
 n_occur[n_occur$Freq > 1,]
 
 #This will show as: 
-+              Var1 Freq
-+24      1grape1230    2
-+137     3grape1230    2
-+273     5grape1230    2
-+336 trialmorningc3    2
+              Var1 Freq
+24      1grape1230    2
+137     3grape1230    2
+273     5grape1230    2
+336 trialmorningc3    2
 
-+#You can then obtain the records for each duplicated ID
-+raw1[raw1$dg1 %in% n_occur$Var1[n_occur$Freq > 1],]
+#You can then obtain the records for each duplicated ID
+raw1[raw1$dg1 %in% n_occur$Var1[n_occur$Freq > 1],]
         
 
 #4 Description: This is a way to identify non-matching IDs using the dplyr() package
