@@ -85,4 +85,13 @@ raw1[raw1$dg1 %in% n_occur$Var1[n_occur$Freq > 1],]
         
 #4.I used the grepl function to look for manual errors. I only searched for errors in "apricot" and "pumpkin" since these seemed the most error-prone. While the grepl feature is helpful to look for specific character strings and frequent errors (like "aprciot"), it is hard to look for rarer errors. You'll also need to input each fruit and vegetable name. The code below gave me 4 errors: 3 IDs contained "aprciot", and 1 ID had a different format (4pumpkin1400\). Is there a more efficient way to look for these types of errors?
 filter(raw1, grepl('aprc|pum', dg1))
+
+
+#NEW: How to correct Response ID's one by one
+
+#This is how you obtain row information/select single observation/data point
+raw1[raw1$dg1=='5aprciot1100', ]
+
+#change response id name by 
+raw1[225,6]='5apricot1100'
         
