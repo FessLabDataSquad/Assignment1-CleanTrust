@@ -94,4 +94,6 @@ raw1[raw1$dg1=='5aprciot1100', ]
 
 #change response id name by 
 raw1[225,6]='5apricot1100'
-        
+
+#In one line
+raw1[raw1$dg1=='5aprciot1100',"dg1"]='5apricot1100'
