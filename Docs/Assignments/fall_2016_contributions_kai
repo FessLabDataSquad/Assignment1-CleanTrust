@@ -1,0 +1,99 @@
+#1 Description: This is one way to look for manual errors within a dataframe. One disadvantage is that you would have to know how the IDs are classified (know all the fruit and vegetable names that were used for ID entries).
+
+# This is one way to look for manual errors within a dataframe. The filter() function is a part of dplyr. The grepl() function searches matching character strings. 
+
+#This code gives us 8 results which have the character string "apr" within the ID column. 6 of the IDs contain "apricot", and 2 of the IDs contain "aprciot".
+filter(raw1, grepl('apr', dg1))
+
+# This code gives us 13 IDs that contain "grape", and 2 of the IDs are the same (5grape1230 appears twice). 
+filter(raw1, grepl('gra', dg1))
+
+# This code gives us 12 IDs that contain "pumpkin", and 1 ID does not have the same format as the other IDs (4pumpkin1400\\). 
+filter(raw1, grepl('pum', dg1))
+
+# You can also combine the above into one line of code: 
+filter(raw1, grepl('apr|gra|pum', dg1))
+
+
+#2 Description: This is one way to produce useful formatting for each variable's data. It also provides a key linking the original item to the new item. However, it involves installing a new package (DataCombine). Maybe dplyr has a cleaner way of reformatting responses?
+
+# This is one way to format a variable's data. It involves the DataCombine package which is used to clean packages.
+install.packages("DataCombine") 
+library(DataCombine)
+
+#This example shows how to reformat the Likert scale responses. Below is a sample data frame (LikertScale). 
+LikertScale <- data.frame(ratings=c("1 strongly disagree", "4 neither agree nor disagree", "7 strongly agree"))
+
+# Then, create a dataframe (Replaces) with two columns: left side has the pattern, and right side has the replacement (possible key?) 
+Replaces <- data.frame(from=c("1 strongly disagree", "4 neither agree nor disagree", "7 strongly agree"), to=c("1", "4", "7"))  
+
+#This will show as: 
+Replaces
+                          from to
+1          1 strongly disagree  1
+2 4 neither agree nor disagree  4
+3             7 strongly agree  7
+
+#Then, use the FindReplace() function, which allows you to replace multiple character string patterns within a df's column. 
+ReplacedLikertScale <- FindReplace(data=LikertScale, Var="ratings", replaceData=Replaces, from="from", to = "to")
+                          
+#Other examples this method can be used for reformatting: "1.0" -> "1", "CA" -> "California", etc. 
+        
+        
+#3 Description: While looking for errors, I noticed that some IDs repeated more than once. While looking through stackoverflow, I came across one way to identify ID duplicates. This method can be generalized to any dataset where we are interested in frequency of occurrence.
+        
+# This is one way to look for duplicate IDs (I found this on stackoverflow). 
+# Using the table() function will give you a list of all the IDs and the number of times they occured. 
+n_occur <- data.frame(table(raw1$dg1))
+
+# You can narrow the list down to IDs that appear more than once
+n_occur[n_occur$Freq > 1,]
+
+#This will show as: 
+              Var1 Freq
+24      1grape1230    2
+137     3grape1230    2
+273     5grape1230    2
+336 trialmorningc3    2
+
+#You can then obtain the records for each duplicated ID
+raw1[raw1$dg1 %in% n_occur$Var1[n_occur$Freq > 1],]
+        
+
+#4 Description: This is a way to identify non-matching IDs using the dplyr() package
+#Ex/ of identifying non-matching errors between raw files
+anti_join(raw1, raw5, by="dg1")->compare1and5
+
+#shows 4 non-matching IDs: 1pepper1630, test,     , apple0
+       
+ 
+#SUMMARY
+#Using the methods above, I have found around 10-15 errors (excluding the trial IDs). The next question/issue would be how to actually correct these errors once we've identified them.
+        
+#1.I identified the trials/tests responses and the code below gave me 15 IDs (raw5 had 14 IDs):
+filter(raw1, grepl('test|trial', dg1))
+...
+filter(raw5, grepl('test|trial', dg1))
+        
+#2.I used anti_join to find non-matching errors. I compared raw1 with raw5, since raw1 had the most observations (n=342) and raw5 had the least # of observations (n=338). I obtained 4 IDs: 1pepper1630, test, _____, and apple0.
+anti_join(raw1, raw5, by="dg1")->compare1and5
+        
+#3.I identified any duplicate IDs. I looked at raw1 since it had the most observations. The following IDs appeared twice: trialmorningc3, 1grape1230, 3grape1230, and 5grape1230.
+n_occur <- data.frame(table(raw1$dg1))
+n_occur[n_occur$Freq > 1,]
+raw1[raw1$dg1 %in% n_occur$Var1[n_occur$Freq > 1],]
+        
+#4.I used the grepl function to look for manual errors. I only searched for errors in "apricot" and "pumpkin" since these seemed the most error-prone. While the grepl feature is helpful to look for specific character strings and frequent errors (like "aprciot"), it is hard to look for rarer errors. You'll also need to input each fruit and vegetable name. The code below gave me 4 errors: 3 IDs contained "aprciot", and 1 ID had a different format (4pumpkin1400\). Is there a more efficient way to look for these types of errors?
+filter(raw1, grepl('aprc|pum', dg1))
+
+
+#NEW: How to correct Response ID's one by one
+
+#This is how you obtain row information/select single observation/data point
+raw1[raw1$dg1=='5aprciot1100', ]
+
+#change response id name by 
+raw1[225,6]='5apricot1100'
+
+#In one line
+raw1[raw1$dg1=='5aprciot1100',"dg1"]='5apricot1100'
