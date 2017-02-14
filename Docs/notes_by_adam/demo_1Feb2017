@@ -1,0 +1,10 @@
+# demo of using "antijoin" from dplyr to find mismatched IDs
+install.packages("dplyr") #one time installation of package
+library(dplyr) # every time you load R you need to call up the packaage
+
+study1 = read.csv ("RAW DATA game1_results FINAL.csv", header=T, stringsAsFactors = F)
+study5 = read.csv ("RAW DATA game5_results FINAL.csv", header=T, stringsAsFactors = F)
+
+compare = anti_join(study1, study5, by="dg1")
+
+compare$dg1
