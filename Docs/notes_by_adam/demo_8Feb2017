@@ -1,0 +1,27 @@
+# Big picture: goal is to create a table of all instances of mismatched cases. This table will serve as a checklist for correcting errors in the source files.
+
+# suggested R strategy:
+
+# 1. Use "antijoin" from dplyr to find mismatched IDs between paired comparisons. (So will need to repeat for each possible pairing -- order matters so use both orders)
+
+install.packages("dplyr") #one time installation of package
+library(dplyr) # every time you load R you need to call up the packaage
+
+study1 = read.csv ("RAW DATA game1_results FINAL.csv", header=T, stringsAsFactors = F)
+study5 = read.csv ("RAW DATA game5_results FINAL.csv", header=T, stringsAsFactors = F)
+
+compare_1to5 = anti_join(study1, study5, by="dg1") 
+
+# So now object "compare_1to5" stores one comparison. Eventually we'll have a whole bunch of these that we want to stack on top of each other in one big table. Such a table should also have a column making it clear what each row means, so probably when we create each comparison, we want to add an extra column (or two) to identify which comparison is presented in that row. It might be convenient to create those columns as the object is being created. Code sorta like this might do that job:
+
+compare_1to5 = c ( compare_1to5$dg1, comparison = "1 to 5") # this should just combine (1) the critical information from the output of anti_join() -- the critical info being what is stored in the "dg1" variable with (2) an extra column telling what the source of the comparison was: new column name "comparison" and the value in that column is "1 to 5". the code might not be right, but this is the right idea.
+
+# 2. Build a table that combines each comparison output, plus the columns for identifying the X and Y
+### dplyr function "bind" looks right
+
+## table = bind_rows(list of comparisons, , ,)  # something like this
+
+## so the final table basically tells us each item that appears in one source file but not another.
+  
+# 3. Then we'll use that table as a checklist -- each entry will require some resolution. E.g. correcting typos, deleting practice cases, etc
+
