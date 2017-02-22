@@ -1,0 +1,57 @@
+raw1 = read.csv("RAW DATA game1_results FINAL.csv", header=TRUE, stringsAsFactors=FALSE)
+raw2 = read.csv("RAW DATA game2_results FINAL.csv", header=TRUE, stringsAsFactors=FALSE)
+raw3 = read.csv("RAW DATA game3_results FINAL.csv", header=TRUE, stringsAsFactors=FALSE)
+raw4 = read.csv("RAW DATA game4_results FINAL.csv", header=TRUE, stringsAsFactors=FALSE)
+raw5 = read.csv("RAW DATA game5_results FINAL.csv", header=TRUE, stringsAsFactors=FALSE)
+raw6 = read.csv("RAW DATA Demographics_results FINAL.csv", header=TRUE, stringsAsFactors=FALSE)
+
+# You can narrow the list down to IDs that appear more than once
+n_occur <- data.frame(table(raw1$dg1))
+
+# You can narrow the list down to IDs that appear more than once
+raw1_duplicate = n_occur[n_occur$Freq > 1,]
+
+
+n_occur <- data.frame(table(raw2$dg1))
+raw2_duplicate = n_occur[n_occur$Freq > 1,]
+
+n_occur <- data.frame(table(raw3$dg1))
+raw3_duplicate = n_occur[n_occur$Freq > 1,]
+
+n_occur <- data.frame(table(raw4$dg1))
+raw4_duplicate = n_occur[n_occur$Freq > 1,]
+
+n_occur <- data.frame(table(raw5$dg1))
+raw5_duplicate = n_occur[n_occur$Freq > 1,]
+
+n_occur <- data.frame(table(raw6$dg1))
+raw6_duplicate = n_occur[n_occur$Freq > 1,]
+
+#create table
+
+raw1stack = as.data.frame(cbind(raw1_duplicate, file = "raw1"))
+raw2stack = as.data.frame(cbind(raw2_duplicate, file = "raw2"))
+raw3stack = as.data.frame(cbind(raw3_duplicate, file = "raw3"))
+raw4stack = as.data.frame(cbind(raw4_duplicate, file = "raw4"))
+raw5stack = as.data.frame(cbind(raw5_duplicate, file = "raw5"))
+raw6stack = as.data.frame(cbind(raw6_duplicate, file = "raw6"))
+
+library(plyr)
+
+install.packages("plyr")
+library(plyr)
+table = rbind.fill(raw1stack, raw2stack)
+table = rbind.fill(table, raw3stack)
+table = rbind.fill(table, raw4stack)
+table = rbind.fill(table, raw5stack)
+table = rbind.fill(table, raw6stack)
+
+
+#change dg1 into different name
+"id"->colnames(table)[1]
+
+#sort table alphabetically by id 
+table=table[order(table$id),]
+
+#export as csv file
+write.csv(table, file="Duplicated ID Table.csv", row.names=F)
