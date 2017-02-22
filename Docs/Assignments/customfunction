@@ -26,6 +26,9 @@ custom.function = function (x, y) as.data.frame ( cbind ( (anti_join ( x , y , b
 # then we need to create a list of each combo of x and y (i.e. every possible pair of numbers from 1:6)
 
 list_of_comparisons = (FUNCTION.TAKES-EVERY POSSIBLE PAIR FROM OUR LIST OF 6 RAW INPUTS)
+# here is a method that comes close to generating the paired comparison list
+subset ((expand.grid ( paste ("raw", 1:6), paste ("raw" , 1:6)) ), Var1!=Var2)
+
 
 # then we apply the custom function to the list.
 # the *apply() family of functions could work this way:
