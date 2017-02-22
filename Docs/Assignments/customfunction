@@ -1,0 +1,37 @@
+# This script is just to sketch out how to use a custom function to improve the efficiency of a brute-force solution.
+
+# brute force solution involves a lot of repetitive lines that look like this:
+
+#step 1
+
+compare1to5 = anti_join(raw1, raw5, by="dg1")
+compare2to5 = anti_join(raw2, raw5, by="dg1")
+
+# step 2
+
+compare1to5 = as.data.frame(cbind(compare1to5$dg1, comparison = "1 to 5"))
+compare2to5 = as.data.frame(cbind(compare2to5$dg1, comparison = "2 to 5"))
+
+# The suggested solution is to combine both of those steps into a custom function, conceptually like this:
+#  custom.function = function (x, y) step 2 ( step 1 (x, y) ) #step 1 nested inside of step 2, i.e. apply step 2 to the result of step 1
+
+# or
+
+# custom.function = function (x, y) step 1 (x, y) %>% step 2
+
+
+# as for the function, it could look something like this:
+custom.function = function (x, y) as.data.frame ( cbind ( (anti_join ( x , y , by = "dg1"))$dg1 ), comparison = TEXT.COMBINATION.FUNCTION (name(x), "_to_", name(y)))
+
+# then we need to create a list of each combo of x and y (i.e. every possible pair of numbers from 1:6)
+
+list_of_comparisons = (FUNCTION.TAKES-EVERY POSSIBLE PAIR FROM OUR LIST OF 6 RAW INPUTS)
+
+# then we apply the custom function to the list.
+# the *apply() family of functions could work this way:
+final_object = *apply ( list , custom.function  )
+# or there might be some kind of loop ( e.g. FOR () ) that would do it.
+
+# This strategy can be used to condense more than 2 steps
+
+ 
