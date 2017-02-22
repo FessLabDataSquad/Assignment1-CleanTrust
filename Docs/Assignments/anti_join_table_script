@@ -2,7 +2,7 @@
 #This is a way to create a table of all the mismatched ID's. 
 #Feel free to make it more clean/efficient. 
 
-#Import files
+#Import files.
 raw1 = read.csv("RAW DATA game1_results FINAL.csv", header=TRUE, stringsAsFactors=FALSE)
 raw2 = read.csv("RAW DATA game2_results FINAL.csv", header=TRUE, stringsAsFactors=FALSE)
 raw3 = read.csv("RAW DATA game3_results FINAL.csv", header=TRUE, stringsAsFactors=FALSE)
@@ -10,13 +10,13 @@ raw4 = read.csv("RAW DATA game4_results FINAL.csv", header=TRUE, stringsAsFactor
 raw5 = read.csv("RAW DATA game5_results FINAL.csv", header=TRUE, stringsAsFactors=FALSE)
 raw6 = read.csv("RAW DATA Demographics_results FINAL.csv", header=TRUE, stringsAsFactors=FALSE)
 
-#Eliminate rows that have "test" ID name. 
-raw1=raw1[!(raw1$dg1=='test'),]
-raw2=raw2[!(raw2$dg1=='test'),]
-raw3=raw3[!(raw3$dg1=='test'),]
-raw4=raw4[!(raw4$dg1=='test'),]
-raw5=raw5[!(raw5$dg1=='test'),]
-raw6=raw6[!(raw6$dg1=='test'),]
+#Eliminate rows that have ID names with "test" or "trial". 
+raw1=raw1[!(grepl("test", raw1$dg1)|grepl("trial", raw1$dg1)),]
+raw2=raw2[!(grepl("test", raw2$dg1)|grepl("trial", raw2$dg1)),]
+raw3=raw3[!(grepl("test", raw3$dg1)|grepl("trial", raw3$dg1)),]
+raw4=raw4[!(grepl("test", raw4$dg1)|grepl("trial", raw4$dg1)),]
+raw5=raw5[!(grepl("test", raw5$dg1)|grepl("trial", raw5$dg1)),]
+raw6=raw6[!(grepl("test", raw6$dg1)|grepl("trial", raw6$dg1)),]
 
 #Load dplyr. Use anti_join function to compare two files. Order matters. 
 library(dplyr)
@@ -62,6 +62,7 @@ compare6to3 = anti_join(raw6, raw3, by="dg1")
 
 #Select appropriate column (dg1) and create new column with name of comparison. 
 #Lexi's task: create/find a function that, in the new column, names the source of the comparison (instead of having to type "comparison =" etc. all the time)
+#custom function where you say, function(x), and for each x, you do as.data.frame(cbind(x$dg1), names(x)) and take that function, and feed it a list of all comparisons. 
 compare1to5 = as.data.frame(cbind(compare1to5$dg1, comparison = "1 to 5"))
 compare2to5 = as.data.frame(cbind(compare2to5$dg1, comparison = "2 to 5"))
 compare3to5 = as.data.frame(cbind(compare3to5$dg1, comparison = "3 to 5"))
@@ -102,7 +103,7 @@ compare3to6 = as.data.frame(cbind(compare3to6$dg1, comparison = "3 to 6"))
 
 compare6to3 = as.data.frame(cbind(compare6to3$dg1, comparison = "6 to 3"))
 
-#Load plyr. Merge two files at a time. 
+#Load plyr. Merge two files at a time. use dplyr, rbind. 
 library(plyr)
 table = rbind.fill(compare1to5, compare2to5)
 table = rbind.fill(table, compare3to5)
@@ -142,75 +143,3 @@ table=table[order(table$id),]
 
 #export as csv file
 write.csv(table, file="mismatched_id_table_anti_join.csv", row.names=F)
-
-
-
-compare3to1 = as.data.frame(cbind(compare3to1$dg1, comparison = "3 to 1"))
-compare4to1 = as.data.frame(cbind(compare4to1$dg1, comparison = "4 to 1"))
-compare6to1 = as.data.frame(cbind(compare6to1$dg1, comparison = "6 to 1"))
-
-compare1to2 = as.data.frame(cbind(compare1to2$dg1, comparison = "1 to 2"))
-compare1to3 = as.data.frame(cbind(compare1to3$dg1, comparison = "1 to 3"))
-compare1to4 = as.data.frame(cbind(compare1to4$dg1, comparison = "1 to 4"))
-compare1to6 = as.data.frame(cbind(compare1to6$dg1, comparison = "1 to 6"))
-
-compare3to2 = as.data.frame(cbind(compare3to2$dg1, comparison = "3 to 2"))
-compare4to2 = as.data.frame(cbind(compare4to2$dg1, comparison = "4 to 2"))
-compare6to2 = as.data.frame(cbind(compare6to2$dg1, comparison = "6 to 2"))
-
-compare2to3 = as.data.frame(cbind(compare2to3$dg1, comparison = "2 to 3"))
-compare2to4 = as.data.frame(cbind(compare2to4$dg1, comparison = "2 to 4"))
-compare2to6 = as.data.frame(cbind(compare2to6$dg1, comparison = "2 to 6"))
-
-compare3to4 = as.data.frame(cbind(compare3to4$dg1, comparison = "3 to 4"))
-compare6to4 = as.data.frame(cbind(compare6to4$dg1, comparison = "6 to 4"))
-
-compare4to3 = as.data.frame(cbind(compare4to3$dg1, comparison = "4 to 3"))
-compare4to6 = as.data.frame(cbind(compare4to6$dg1, comparison = "4 to 6"))
-
-compare3to6 = as.data.frame(cbind(compare3to6$dg1, comparison = "3 to 6"))
-
-compare6to3 = as.data.frame(cbind(compare6to3$dg1, comparison = "6 to 3"))
-
-#Load plyr. Merge two files at a time. 
-library(plyr)
-table = rbind.fill(compare1to5, compare2to5)
-table = rbind.fill(table, compare3to5)
-table = rbind.fill(table, compare4to5)
-table = rbind.fill(table, compare6to5)
-table = rbind.fill(table, compare5to1)
-table = rbind.fill(table, compare5to2)
-table = rbind.fill(table, compare5to3)
-table = rbind.fill(table, compare5to4)
-table = rbind.fill(table, compare5to6)
-table = rbind.fill(table, compare2to1)
-table = rbind.fill(table, compare3to1)
-table = rbind.fill(table, compare4to1)
-table = rbind.fill(table, compare6to1)
-table = rbind.fill(table, compare1to2)
-table = rbind.fill(table, compare1to3)
-table = rbind.fill(table, compare1to4)
-table = rbind.fill(table, compare1to6)
-table = rbind.fill(table, compare3to2)
-table = rbind.fill(table, compare4to2)
-table = rbind.fill(table, compare6to2)
-table = rbind.fill(table, compare2to3)
-table = rbind.fill(table, compare2to4)
-table = rbind.fill(table, compare2to6)
-table = rbind.fill(table, compare3to4)
-table = rbind.fill(table, compare6to4)
-table = rbind.fill(table, compare4to3)
-table = rbind.fill(table, compare4to6)
-table = rbind.fill(table, compare3to6)
-table = rbind.fill(table, compare6to3)
-
-#change dg1 into different name
-"id"->colnames(table)[1]
-
-#sort table alphabetically by id 
-table=table[order(table$id),]
-
-#export as csv file
-write.csv(table, file="mismatched_id_table_anti_join.csv", row.names=F)
-
-
