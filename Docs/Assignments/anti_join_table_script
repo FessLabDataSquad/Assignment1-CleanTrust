@@ -23,31 +23,6 @@ library(dplyr)
 compare1to5 = anti_join(raw1, raw5, by="dg1")
 compare2to5 = anti_join(raw2, raw5, by="dg1")
 compare3to5 = anti_join(raw3, raw5, by="dg1")
-#How to create a table (Kai)
-#This is a way to create a table of all the mismatched ID's. 
-#Feel free to make it more clean/efficient. 
-
-#Import files
-raw1 = read.csv("RAW DATA game1_results FINAL.csv", header=TRUE, stringsAsFactors=FALSE)
-raw2 = read.csv("RAW DATA game2_results FINAL.csv", header=TRUE, stringsAsFactors=FALSE)
-raw3 = read.csv("RAW DATA game3_results FINAL.csv", header=TRUE, stringsAsFactors=FALSE)
-raw4 = read.csv("RAW DATA game4_results FINAL.csv", header=TRUE, stringsAsFactors=FALSE)
-raw5 = read.csv("RAW DATA game5_results FINAL.csv", header=TRUE, stringsAsFactors=FALSE)
-raw6 = read.csv("RAW DATA Demographics_results FINAL.csv", header=TRUE, stringsAsFactors=FALSE)
-
-#Eliminate rows that have "test" ID name. 
-raw1=raw1[!(raw1$dg1=='test'),]
-raw2=raw2[!(raw2$dg1=='test'),]
-raw3=raw3[!(raw3$dg1=='test'),]
-raw4=raw4[!(raw4$dg1=='test'),]
-raw5=raw5[!(raw5$dg1=='test'),]
-raw6=raw6[!(raw6$dg1=='test'),]
-
-#Load dplyr. Use anti_join function to compare two files. Order matters. 
-library(dplyr)
-compare1to5 = anti_join(raw1, raw5, by="dg1")
-compare2to5 = anti_join(raw2, raw5, by="dg1")
-compare3to5 = anti_join(raw3, raw5, by="dg1")
 compare4to5 = anti_join(raw4, raw5, by="dg1")
 compare6to5 = anti_join(raw6, raw5, by="dg1")
 
