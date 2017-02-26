@@ -123,4 +123,4 @@ table = rbind.fill(table, compare6to3)
 table=table[order(table$id),]
 
 #export as csv file
-write.csv(table, file="mismatched_id_table_anti_join.csv", row.names=F)
+write.csv(table, file="clean_elevation_anti_join_table.csv", row.names=F)
