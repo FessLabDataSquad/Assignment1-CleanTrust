@@ -1,0 +1,22 @@
+#Initial judgments on collected IDs
+
+#Looking at anti_join table: 
+
+#DISCARD: 
+#apple0 is a test. blank responses. did not do raw5. 
+#0 is a test. blank responses. only appears in raw6. 
+#3squash1230. actual participant (filled out demographic info/raw6). but no subsequent tests. 
+#TEST-SE is a test. blank responses. only appears in raw6. 
+#The rest of the ID's that start with "apple" or "aplpe" are test. they only appear in raw6 (demographics--given at beginning), and not found in subsequent tests.
+#l is a test. only appear in raw6.
+#TEST-SE is a test. blank responses. only appear in raw6. 
+
+#KEEP: 
+#1pepper1630. actual participant. appears everywhere except raw5 (last study). 
+
+#CONCERN: 
+#Ignore the "NA" IDs? I think they appeared when using rbind to make the table (have "NA" in empty cells). 
+
+
+
+
