@@ -34,7 +34,10 @@
 #trialmorningc3 appears twice. All of the "trialmorning" IDs have different demographic data (indicating different participants), but they are most likely trials since there is "trial" in the name. Maybe it was a pilot study? 
 
 
-#HOW TO FIX
+
+
+
+#HOW TO FIX (EXAMPLES)
 
 #Use this to change name of ID
 raw1[raw1$dg1=='5aprciot1100',"dg1"]='5apricot1100'
