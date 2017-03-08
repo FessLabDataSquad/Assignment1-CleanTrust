@@ -34,6 +34,15 @@
 #trialmorningc3 appears twice. All of the "trialmorning" IDs have different demographic data (indicating different participants), but they are most likely trials since there is "trial" in the name. Maybe it was a pilot study? 
 
 
+#HOW TO FIX
+
+#Use this to change name of ID
+raw1[raw1$dg1=='5aprciot1100',"dg1"]='5apricot1100'
+
+#Use this to discard entire row
+raw6=raw6[!(raw6$dg1=='0'),]
+
+
 
 
 
