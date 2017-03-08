@@ -1,0 +1,113 @@
+# start by building a list (of lists of lists) of all the scales that i want to do PCAs on
+
+# start with study 1
+scales = list (
+  mturk1 = list (
+    elevating_emotions = c("e.uplifted","e.moved","e.touched","e.inspired","e.compassion","e.admiration"),
+    somatic = c("e.warm","e.lump","e.tears","e.chills" ),
+    prosocial_motives = c("e.wanttohelp","e.close","e.betterperson","e.newhelp"),
+    positive_affect = c("happy", "entertained"),
+    idealism = c("a.dishonest","a.kind","a.itrust","a.nottrust","a.trustworthy","a.takeadvantage","a.befair","a.careful","a.helpful","a.lookingout"),
+    view_humanity = c("e.optimistic","e.good","e.goodworld","e.admireable","e.caremore")
+  ))
+
+# now add study 2
+scales$mturk2 = list (
+    elevating_emotions = scales$mturk1$elevating_emotions,
+    somatic = scales$mturk1$somatic,
+    prosocial_motives = scales$mturk1$prosocial_motives,
+    positive_affect = c("happy", "entertained", "amused"),
+    idealism =    scales$mturk1$idealism,
+    view_humanity  = scales$mturk1$ view_humanity
+  )
+
+# add study 3
+scales$mturk3 = list (
+  elevating_emotions_pre = c("e.uplifted.pre", "e.compassion.pre", "e.admiration.pre", "e.heartwarming.pre", "e.moved.pre", "e.touched.pre", "e.inspired.pre"),
+  elevating_emotions_post = c("e.uplifted.post", "e.compassion.post", "e.admiration.post", "e.heartwarming.post", "e.moved.post", "e.touched.post", "e.inspired.post"),
+  prosocial_motives = c("e.wanttohelp","e.feelclose","e.newhelp","e.donate","e.worlddeserves","e.betterperson"), # e.close became e.feelclose??
+  prosocial_motives_preA_postB = c("e.wanttohelp","e.feelclose","e.newhelp"), # these items were measured pre-video in order A, post-video in order B
+  prosocial_motives_preB_postA = c("e.donate","e.worlddeserves","e.betterperson"), # reverse of previous comment
+  positive_affect = c("pa.happy", "pa.amused","pa.delighted","pa.entertained"),
+  positive_affect_preA_postB = c("pa.happy", "pa.amused"),
+  positive_affect_preB_postA = c("pa.delighted","pa.entertained"), 
+  idealism = c("a.honest","a.malicious","a.noadvantage","a.pessimistic","a.befair","a.nothelpful","a.trustworthy","a.notgood","a.dontbecareful","a.inottrust","a.lookoutothers","a.peoplenottrust","a.good","a.careonly","a.awful","a.dishonest","a.kind","a.takeadvantage","a.optimistic","a.notfair","a.helpful","a.nottrustworthy","a.canbegood","a.becareful","a.itrust","a.lookoutself","a.peopletrust","a.evil","a.admirable","a.caremore"),
+  idealism_preA_postB =c("a.honest","a.malicious","a.noadvantage","a.pessimistic","a.befair","a.nothelpful","a.trustworthy","a.notgood","a.dontbecareful","a.inottrust","a.lookoutothers","a.peoplenottrust","a.good","a.careonly","a.awful"),
+  idealism_preB_postA = c("a.dishonest","a.kind","a.takeadvantage","a.optimistic","a.notfair","a.helpful","a.nottrustworthy","a.canbegood", "a.becareful","a.itrust","a.lookoutself","a.peopletrust","a.evil","a.admirable","a.caremore")
+)
+
+##mturk4
+scales$mturk4 = list (
+  elevating_emotions_pre =  scales$mturk3$elevating_emotions_pre,
+  elevating_emotions_post = scales$mturk3$elevating_emotions_post,
+  somatic_pre = c("e.warmchest.pre", "e.lump.pre", "e.tears.pre", "e.goosebumps.pre"), #e.chills to e.goosebumps??
+  somatic_post = c("e.warmchest.post", "e.lump.post", "e.tears.post", "e.goosebumps.post"),
+  prosocial_motives_pre = c("e.wanttohelp.pre", "e.feelclose.pre", "e.newhelp.pre", "e.betterperson.pre"),
+  prosocial_motives_post = c("e.wanttohelp.post", "e.feelclose.post", "e.newhelp.post", "e.betterperson.post"),
+  positive_affect_pre = c("pa.happy.pre", "pa.amused.pre", "pa.delighted.pre", "pa.entertained.pre"),
+  positive_affect_post = c("pa.happy.post", "pa.amused.post", "pa.delighted.post", "pa.entertained.post"),
+  idealism_A =c("a.honest","a.malicious","a.noadvantage","a.pessimistic","a.befair","a.nothelpful","a.trustworthy","a.notgood","a.dontbecareful","a.inottrust","a.lookoutothers","a.peoplenottrust","a.good", "a.notadmirable", "a.careonly"),
+  idealism_B = c("a.dishonest","a.kind","a.takeadvantage","a.optimistic","a.notfair","a.helpful","a.nottrustworthy","a.canbegood", "a.becareful", "a.itrust","a.lookoutself", "a.peopletrust","a.littlegood", "a.admirable","a.caremore")
+)
+
+scales$mturk4$idealism = with (scales$mturk4, c (idealism_A, idealism_B))
+
+# field study
+scales$field1 = list (
+  elevating_emotions = c("e.uplifted","e.moved","e.touched","e.inspired","e.compassion","e.admiration", "e.heartwarming"),
+  somatic = c("e.warmchest", "e.lump", "e.tears", "e.goosebumps"),
+  prosocial_motives =  c("e.wanttohelp","e.feelclose","e.newhelp","e.betterperson"),
+  positive_affect = c("pa.happy", "pa.amused","pa.delighted","pa.entertained"),
+  idealism = c("a.dishonest","a.kind","a.takeadvantage","a.optimistic","a.notfair","a.helpful","a.nottrustworthy","a.canbegood", "a.becareful","a.itrust","a.lookoutself","a.peopletrust","a.littlegood","a.admirable","a.caremore")
+)
+
+# throw in the full elevation scales
+scales$mturk1$elevation = with(scales$mturk1 , c( elevating_emotions, somatic , prosocial_motives))
+scales$mturk2$elevation = with(scales$mturk2 , c( elevating_emotions, somatic , prosocial_motives))
+scales$mturk4$elevation_pre = with(scales$mturk4 , c( elevating_emotions_pre, somatic_pre , prosocial_motives_pre))
+scales$mturk4$elevation_post = with(scales$mturk4 , c( elevating_emotions_post, somatic_post , prosocial_motives_post))
+scales$field1$elevation = with(scales$field1 , c( elevating_emotions, somatic , prosocial_motives))
+
+
+
+
+
+
+
+#this is a functional prototype of how to do PCAs on the list items 
+# this is brute force that could be made more efficient
+
+PCAs$elevating_emotions = list (
+ mturk1 =  PCA(na.omit(mturk1[,as.character(scales$mturk1$elevating_emotions)]), graph=F),
+ mturk2 =  PCA(na.omit(mturk2[,as.character(scales$mturk2$elevating_emotions)]), graph=F),
+ mturk3_pre =  PCA(na.omit(mturk3[,as.character(scales$mturk3$elevating_emotions_pre)]), graph=F),
+ mturk3_post =  PCA(na.omit(mturk3[,as.character(scales$mturk3$elevating_emotions_post)]), graph=F),
+ mturk4_pre =  PCA(na.omit(mturk4[,as.character(scales$mturk4$elevating_emotions_pre)]), graph=F),
+ mturk4_post =  PCA(na.omit(mturk4[,as.character(scales$mturk4$elevating_emotions_post)]), graph=F)
+  )
+  
+ # eventually i'd have other list elements (e.g. PCAs$somatic, PCAs$prosocial_motives, etc)
+ 
+ 
+ # below here is the stats consultant suggestion:
+  
+    
+## Step 1: looping
+
+## make list of data.frames that i'll apply functions to
+## (some items are repeated because of a specific feature of the designs of these studies)
+
+input_list <- list(mturk1,mturk2,mturk3,mturk3,mturk4,mturk4)
+
+## now make a list of all of the subsets of each data frame that containt the scale data -- 
+## later i'll do the PCAs on all of these data sets
+
+
+data_list <- list()
+for( i in 1:6){
+  data_list[[i]] <- na.omit(input_list[[i]][, scales[[i]]$elevating_emotions])
+}
+
+## Step 2
+## apply the PCA function to my data list -- return an indexed list of all of the PCA analyses
+PCA$elevating_emotions <- lapply(data_list, function(x) PCA(x,graph= F))
