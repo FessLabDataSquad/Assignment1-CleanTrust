@@ -20,3 +20,20 @@
 
 
 
+#Duplicate IDs table:
+#DISCARD:
+#blank ids appear 28 times in raw6. they are all tests. 
+#test appears 11 times in raw6. they are all tests. 
+
+#KEEP
+#1grape1230 appears twice. it is two different participants (because of different demographic data). We are able to tell them apart because they both have different dates under the "Date" column (which is present in each raw file). 
+#3grape1230 appears twice. same issue as 1grape1230--can differentiate based on date. 
+#5grape1230 appears twice. same issue as above--can differentiate based on date. 
+
+#CONCERN: 
+#trialmorningc3 appears twice. All of the "trialmorning" IDs have different demographic data (indicating different participants), but they are most likely trials since there is "trial" in the name. Maybe it was a pilot study? 
+
+
+
+
+
