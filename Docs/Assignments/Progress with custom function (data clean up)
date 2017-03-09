@@ -1,0 +1,29 @@
+
+#########################################################################################################
+#Custom function:
+
+raw_files <- list(raw1,raw2,raw3,raw4,raw5,raw6)
+raw2_files <- list(raw1,raw2,raw3,raw4,raw5,raw6)
+data_list <- list() #creates an empty list
+data2_list <- list() #creates another empty list
+
+
+
+#these two for loops could be nested together, and will eventually. This is just for debugging processes 
+for(i in 1:6)
+{
+  data_list[[i]] <-na.omit(raw_files[[i]])
+}
+for(j in 1:6)
+{
+  data2_list[[j]] <- na.omit(raw2_files[[j]])
+}
+
+custFunc <- function(x, y)   #name of the custom function
+  { 
+  #I took these out, because I am not sure if they will be useful
+#comparisonX = deparse(substitute(x)) #this gets the name of the function argu. could be useful
+#comparisonY = deparse(substitute(y)) #this gets the name of the function argu. could be useful
+  
+  c(anti_join(i,j, by='dg1')$dg1)
+  }
