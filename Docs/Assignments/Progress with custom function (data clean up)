@@ -27,3 +27,29 @@ custFunc <- function(x, y)   #name of the custom function
   
   c(anti_join(i,j, by='dg1')$dg1)
   }
+
+
+or 
+
+
+for(i in 1:6)
+{
+  data_list[[i]] <-na.omit(raw_files[[i]])
+}
+for(j in 1:6)
+{
+  data2_list[[j]] <- na.omit(raw2_files[[j]])
+}
+#could be a nested for loop, but this should be able to do the job
+#until I figure out nested for loops for r better
+
+custFunc <- function(x, y)
+  { 
+#comparisonX = deparse(substitute(x)) #this gets the name of the function argu. could be useful
+#comparisonY = deparse(substitute(y)) #this gets the name of the function argu. could be useful
+  
+  #c(anti_join(i,j, by='dg1')$dg1)
+  as.data.frame(cbind(anti_join(i,j,by ='dg1'))$dg1 )
+  paste(name(i), name(j))
+  }
+
